@@ -275,7 +275,7 @@ function __tsip_transac_nict_Proceeding_2_Proceeding_X_timerE(ao_args) {
 		passed to the transport layer for retransmission, and Timer E MUST be
 		reset with a value of T2 seconds.
 	*/
-    o_transac.i_timerE = Math.min(o_transac.i_timerE << 1, o_transac.get_stack().o_timers.getT2());
+    o_transac.i_timerE = Math.min(o_transac.i_timer['E'] << 1, o_transac.get_stack().o_timers.get('T2'));
     o_transac.timer_schedule('nict', 'E');
 
 	return 0;
@@ -445,13 +445,13 @@ function __tsip_transac_nict_event_callback(o_self, e_event_type, o_message) {
 
 function __tsip_transac_nict_timer_callback(o_self, o_timer){
 	if(o_self){
-		if(o_timer == o_self.o_timerE){
+		if(o_timer == o_self.o_timer['E']){
 			o_self.fsm_act(tsip_transac_nict_actions_e.TIMER_E, null);
 		}
-		else if(o_timer == o_self.o_timerF){
+		else if(o_timer == o_self.o_timer['F']){
 			o_self.fsm_act(tsip_transac_nict_actions_e.TIMER_F, null);
 		}
-		else if(o_timer == o_self.o_timerK){
+		else if(o_timer == o_self.o_timer['K']){
 			o_self.fsm_act(tsip_transac_nict_actions_e.TIMER_K, null);
 		}
 	}

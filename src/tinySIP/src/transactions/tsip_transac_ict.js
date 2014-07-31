@@ -611,16 +611,16 @@ function __tsip_transac_ict_event_callback(o_self, e_event_type, o_message) {
 
 function __tsip_transac_ict_timer_callback(o_self, o_timer) {
     if (o_self) {
-        if (o_timer == o_self.o_timerA) {
+        if (o_timer == o_self.o_timer['A']) {
             o_self.fsm_act(tsip_transac_ict_actions_e.TIMER_A, null);
         }
-        else if (o_timer == o_self.o_timerB) {
+        else if (o_timer == o_self.o_timer['B']) {
             o_self.fsm_act(tsip_transac_ict_actions_e.TIMER_B, null);
         }
-        else if (o_timer == o_self.o_timerD) {
+        else if (o_timer == o_self.o_timer['D']) {
             o_self.fsm_act(tsip_transac_ict_actions_e.TIMER_D, null);
         }
-        else if (o_timer == o_self.o_timerM) {
+        else if (o_timer == o_self.o_timer['M']) {
             o_self.fsm_act(tsip_transac_ict_actions_e.TIMER_M, null);
         }
     }
