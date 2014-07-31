@@ -295,7 +295,7 @@ tsip_dialog.prototype.request_new = function (s_method) {
                     /**** without expires */
                     if (o_request.line.request.e_type == tsip_request_type_e.SUBSCRIBE) {
                         /* RFC 3265 - 3.1.1. Subscription Duration
-                        An "expires" parameter on the "Contact" header has no semantics for SUBSCRIBE and is explicitly 
+                        An "expires" parameter on the "Contact" header has no semantics for SUBSCRIBE and is explicitly
                         not equivalent to an "Expires" header in a SUBSCRIBE request or response.
                         */
                         o_request.add_header(new tsip_header_Expires(this.i_expires / 1000));
@@ -380,7 +380,7 @@ tsip_dialog.prototype.request_new = function (s_method) {
         o_request.o_hdr_CSeq.i_seq = ++(this.i_cseq_value);
     }
 
-    /* Route generation 
+    /* Route generation
     *	==> http://betelco.blogspot.com/2008/11/proxy-and-service-route-discovery-in.html
     * The dialog Routes have been copied above.
 
@@ -609,7 +609,7 @@ tsip_dialog.prototype.request_send = function (o_request) {
 
     var i_ret = -1;
 
-    /*	Create new transaction. The new transaction will be added to the transaction layer. 
+    /*	Create new transaction. The new transaction will be added to the transaction layer.
     The transaction has all information to create the right transaction type (NICT or ICT).
     As this is an outgoing request ==> It shall be a client transaction (NICT or ICT).
     For server transactions creation see "tsip_dialog_response_send()".
@@ -722,12 +722,19 @@ tsip_dialog.prototype.timer_schedule = function (T, N) {
     this.timer_cancel(N);
     var This = this;
     var s_code = tsk_string_format("This.o_timer{1} = setTimeout(function(){ __tsip_dialog_{0}_timer_callback(This, This.o_timer{1})}, This.i_timer{1});", T, N);
-    eval(s_code);
+    console.log(s_code);
+    switch (T) {
+      case "register":
+        This.o_timer[N] = setTimeout(function(){ __tsip_dialog_register_timer_callback(This, This.o_timer[N])}, This.i_timer[N]);
+    }
+    //eval(s_code);
 }
 
 tsip_dialog.prototype.timer_cancel = function (N) {
     var s_code = tsk_string_format("if(this.o_timer{0}) { clearTimeout(this.o_timer{0}); this.o_timer{0} = null; }", N);
-    eval(s_code);
+    console.log(s_code);
+    if(this.o_timer[N]) { clearTimeout(this.o_timer[N]); this.o_timer[N] = null; }
+    //eval(s_code);
 }
 
 tsip_dialog.prototype.callback = function (e_event_type, o_message) {
@@ -1049,9 +1056,9 @@ tsip_dialog.prototype.get_newdelay = function (o_message) {
         }
     }
 
-    /* 3GPP TS 24.229 - 
-    *	The UE shall reregister the public user identity either 600 seconds before the expiration time if the initial 
-    *	registration was for greater than 1200 seconds, or when half of the time has expired if the initial registration 
+    /* 3GPP TS 24.229 -
+    *	The UE shall reregister the public user identity either 600 seconds before the expiration time if the initial
+    *	registration was for greater than 1200 seconds, or when half of the time has expired if the initial registration
     *	was for 1200 seconds or less.
     */
     i_newdelay = (i_expires > 1200) ? (i_expires - 600) : (i_expires >> 1);
@@ -1074,7 +1081,7 @@ tsip_dialog.prototype.ApplyAction = function (o_message, o_action) {
     // response line
     if (o_action.line_resp.i_code && o_action.line_resp.s_phrase && o_message.is_response()) {
         o_message.line.response.i_status_code = o_action.line_resp.i_code;
-        o_message.line.response.s_reason_phrase = o_action.line_resp.s_phrase; 
+        o_message.line.response.s_reason_phrase = o_action.line_resp.s_phrase;
     }
 
     // payload

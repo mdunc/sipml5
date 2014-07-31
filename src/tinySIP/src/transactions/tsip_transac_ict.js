@@ -50,20 +50,34 @@ function tsip_transac_ict(b_reliable, i_cseq_value, s_callid, o_dialog) {
     this.o_fsm.set_onterm_callback(__tsip_transac_ict_onterm, this);
 
     /* Timers */
-    this.o_timerA = null;
-    this.o_timerB = null;
-    this.o_timerD = null;
-    this.o_timerM = null;
+    //this.o_timerA = null;
+    //this.o_timerB = null;
+    //this.o_timerD = null;
+    //this.o_timerM = null;
 
-    this.i_timerA = o_stack.o_timers.getA();
-    this.i_timerB = o_stack.o_timers.getB();
-    this.i_timerD = b_reliable ? 0 : o_stack.o_timers.getD();
-    this.i_timerM = o_stack.o_timers.getM();
+		this.o_timer = {
+			A: null,
+			B: null,
+			D: null,
+			M: null
+		}
+
+    //this.i_timerA = o_stack.o_timers.get('A');
+    //this.i_timerB = o_stack.o_timers.get('B');
+    //this.i_timerD = b_reliable ? 0 : o_stack.o_timers.get('D');
+    //this.i_timerM = o_stack.o_timers.get('M');
+
+		this.i_timer = {
+			A: o_stack.o_timers.get('A'),
+			B: o_stack.o_timers.get('B'),
+			D: b_reliable ? 0 : o_stack.o_timers.get('D'),
+			M: o_stack.o_timers.get('M')
+		}
 
     // initialize the state machine
     this.o_fsm.set(
         /*=======================
-        * === Started === 
+        * === Started ===
         */
         // Started -> (Send) -> Calling
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ict_states_e.STARTED, tsip_transac_ict_actions_e.SEND, tsip_transac_ict_states_e.CALLING, __tsip_transac_ict_Started_2_Calling_X_send, "tsip_transac_ict_Started_2_Calling_X_send"),
@@ -71,7 +85,7 @@ function tsip_transac_ict(b_reliable, i_cseq_value, s_callid, o_dialog) {
         tsk_fsm_entry.prototype.CreateAlwaysNothing(tsip_transac_ict_states_e.STARTED, "tsip_transac_ict_Started_2_Started_X_any"),
 
         /*=======================
-        * === Calling === 
+        * === Calling ===
         */
         // Calling -> (timerA) -> Calling
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ict_states_e.CALLING, tsip_transac_ict_actions_e.TIMER_A, tsip_transac_ict_states_e.CALLING, __tsip_transac_ict_Calling_2_Calling_X_timerA, "tsip_transac_ict_Calling_2_Calling_X_timerA"),
@@ -85,7 +99,7 @@ function tsip_transac_ict(b_reliable, i_cseq_value, s_callid, o_dialog) {
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ict_states_e.CALLING, tsip_transac_ict_actions_e.I_2XX, tsip_transac_ict_states_e.ACCEPTED, __tsip_transac_ict_Calling_2_Accepted_X_2xx, "tsip_transac_ict_Calling_2_Accepted_X_2xx"),
 
         /*=======================
-        * === Proceeding === 
+        * === Proceeding ===
         */
         // Proceeding -> (1xx) -> Proceeding
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ict_states_e.PROCEEDING, tsip_transac_ict_actions_e.I_1XX, tsip_transac_ict_states_e.PROCEEDING, __tsip_transac_ict_Proceeding_2_Proceeding_X_1xx, "tsip_transac_ict_Proceeding_2_Proceeding_X_1xx"),
@@ -95,7 +109,7 @@ function tsip_transac_ict(b_reliable, i_cseq_value, s_callid, o_dialog) {
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ict_states_e.PROCEEDING, tsip_transac_ict_actions_e.I_2XX, tsip_transac_ict_states_e.ACCEPTED, __tsip_transac_ict_Proceeding_2_Accepted_X_2xx, "tsip_transac_ict_Proceeding_2_Accepted_X_2xx"),
 
         /*=======================
-        * === Completed === 
+        * === Completed ===
         */
         // Completed -> (300-699) -> Completed
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ict_states_e.COMPLETED, tsip_transac_ict_actions_e.I_300_to_699, tsip_transac_ict_states_e.COMPLETED, __tsip_transac_ict_Completed_2_Completed_X_300_to_699, "tsip_transac_ict_Completed_2_Completed_X_300_to_699"),
@@ -103,7 +117,7 @@ function tsip_transac_ict(b_reliable, i_cseq_value, s_callid, o_dialog) {
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ict_states_e.COMPLETED, tsip_transac_ict_actions_e.TIMER_D, tsip_transac_ict_states_e.TERMINATED, __tsip_transac_ict_Completed_2_Terminated_X_timerD, "tsip_transac_ict_Completed_2_Terminated_X_timerD"),
 
         /*=======================
-        * === Accepted === 
+        * === Accepted ===
         */
         // Accepted -> (2xx) -> Accepted
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ict_states_e.ACCEPTED, tsip_transac_ict_actions_e.I_2XX, tsip_transac_ict_states_e.ACCEPTED, __tsip_transac_ict_Accepted_2_Accepted_X_2xx, "tsip_transac_ict_Accepted_2_Accepted_X_2xx"),
@@ -111,7 +125,7 @@ function tsip_transac_ict(b_reliable, i_cseq_value, s_callid, o_dialog) {
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ict_states_e.ACCEPTED, tsip_transac_ict_actions_e.TIMER_M, tsip_transac_ict_states_e.TERMINATED, __tsip_transac_ict_Accepted_2_Terminated_X_timerM, "tsip_transac_ict_Accepted_2_Terminated_X_timerM"),
 
         /*=======================
-        * === Any === 
+        * === Any ===
         */
         // Any -> (transport error) -> Terminated
         tsk_fsm_entry.prototype.CreateAlways(tsk_fsm.prototype.__i_state_any, tsip_transac_ict_actions_e.TRANSPORT_ERROR, tsip_transac_ict_states_e.TERMINATED, __tsip_transac_ict_Any_2_Terminated_X_transportError, "tsip_transac_ict_Any_2_Terminated_X_transportError"),
@@ -144,9 +158,9 @@ tsip_transac_ict.prototype.send_ack = function(o_response){
 
 	// check lastINVITE
 	if(	!this.o_request.o_hdr_firstVia ||
-		!this.o_request.o_hdr_From || 
-		!this.o_request.line.request.o_uri || 
-		!this.o_request.o_hdr_Call_ID || 
+		!this.o_request.o_hdr_From ||
+		!this.o_request.line.request.o_uri ||
+		!this.o_request.o_hdr_Call_ID ||
 		!this.o_request.o_hdr_CSeq)
 	{
 		tsk_utils_log_error("Invalid INVITE message");
@@ -163,7 +177,7 @@ tsip_transac_ict.prototype.send_ack = function(o_response){
 	var o_request = null;
 
 	/*	RFC 3261 - 17.1.1.3 Construction of the ACK Request
-		
+
 		The ACK request constructed by the client transaction MUST contain
 		values for the Call-ID, From, and Request-URI that are equal to the
 		values of those header fields in the request passed to the transport
@@ -238,7 +252,7 @@ function __tsip_transac_ict_Started_2_Calling_X_send(ao_args) {
     o_transac.send(o_transac.s_branch, o_transac.o_request);
 
 	/* RFC 3261 - 17.1.1.2 Formal Description
-		If an unreliable transport is being used, the client transaction MUST 
+		If an unreliable transport is being used, the client transaction MUST
 		start timer A with a value of T1.
 		If a reliable transport is being used, the client transaction SHOULD
 		NOT start timer A (Timer A controls request retransmissions).  For
@@ -275,8 +289,8 @@ function __tsip_transac_ict_Calling_2_Calling_X_timerA(ao_args) {
 
 	//== Send the request
 	o_transac.send(o_transac.s_branch, o_transac.o_request);
-    	
-    o_transac.i_timerA <<= 1; /* Will not raise indefinitely ==> see timer B */
+
+    o_transac.i_timer['A'] <<= 1; /* Will not raise indefinitely ==> see timer B */
 	o_transac.timer_schedule('ict', 'A');
 
 	return 0;
@@ -293,7 +307,7 @@ function __tsip_transac_ict_Calling_2_Terminated_X_timerB(ao_args) {
 		requests in the case of an unreliable transport.
 	*/
     o_transac.get_dialog().callback(tsip_dialog_event_type_e.TIMEDOUT, null);
-	
+
 	return 0;
 }
 
@@ -342,7 +356,7 @@ function __tsip_transac_ict_Calling_2_Completed_X_300_to_699(ao_args) {
 function __tsip_transac_ict_Calling_2_Proceeding_X_1xx(ao_args) {
     var o_transac = ao_args[0];
 	var o_response = ao_args[1];
-	
+
 	/*	RFC 3261 - 17.1.1.2 Formal Description
 		If the client transaction receives a provisional response while in
 		the "Calling" state, it transitions to the "Proceeding" state. In the
@@ -351,13 +365,13 @@ function __tsip_transac_ict_Calling_2_Proceeding_X_1xx(ao_args) {
 		passed to the TU.  Any further provisional responses MUST be passed
 		up to the TU while in the "Proceeding" state.
 	*/
-	
+
 	/* Do not retransmit */
 	if(!o_transac.b_reliable){
 		o_transac.timer_cancel('A');
 	}
 	o_transac.timer_cancel('B'); /* Now it's up to the UAS to update the FSM. */
-	
+
 	/* Pass the provisional response to the dialog. */
 	return o_transac.get_dialog().callback(tsip_dialog_event_type_e.I_MSG, o_response);
 }
@@ -365,7 +379,7 @@ function __tsip_transac_ict_Calling_2_Proceeding_X_1xx(ao_args) {
 function __tsip_transac_ict_Calling_2_Accepted_X_2xx(ao_args) {
     var o_transac = ao_args[0];
 	var o_response = ao_args[1];
-	
+
 	/*	draft-sparks-sip-invfix-03 - 8.4.  Pages 126 through 128
 		When a 2xx response is received while in either the "Calling" or
 		"Proceeding" states, the client transaction MUST transition to the
@@ -374,10 +388,10 @@ function __tsip_transac_ict_Calling_2_Accepted_X_2xx(ao_args) {
 		transaction MUST NOT generate an ACK to the 2xx response - its
 		handling is delegated to the TU.
 	*/
-	
+
 	/* Schedule timer M */
 	o_transac.timer_schedule('ict', 'M');
-	
+
 	/* Cancel timers A and B */
 	if(!o_transac.b_reliable){
 		o_transac.timer_schedule('ict', 'A');
@@ -499,7 +513,7 @@ function __tsip_transac_ict_Accepted_2_Accepted_X_2xx(ao_args) {
 		MUST NOT generate an ACK to any 2xx response on its own.  The TU
 		responsible for the transaction will generate the ACK.
 	*/
-	
+
 	/* Pass the response to the TU. */
     return o_transac.get_dialog().callback(tsip_dialog_event_type_e.I_MSG, o_response);
 }
@@ -611,4 +625,3 @@ function __tsip_transac_ict_timer_callback(o_self, o_timer) {
         }
     }
 }
-

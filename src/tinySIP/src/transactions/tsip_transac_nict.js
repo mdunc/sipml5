@@ -9,7 +9,7 @@
 tsip_transac_nict.prototype = Object.create(tsip_transac.prototype);
 tsip_transac_nict.prototype.__b_debug_state_machine = false;
 
-var tsip_transac_nict_actions_e = 
+var tsip_transac_nict_actions_e =
 {
 	CANCEL: tsip_action_type_e.CANCEL,
 
@@ -23,7 +23,7 @@ var tsip_transac_nict_actions_e =
 	ERROR: 10008
 };
 
-var tsip_transac_nict_states_e = 
+var tsip_transac_nict_states_e =
 {
 	STARTED: 0,
 	TRYING: 1,
@@ -47,18 +47,30 @@ function tsip_transac_nict(b_reliable, i_cseq_value, s_cseq_method, s_callid, o_
     this.o_fsm.set_onterm_callback(__tsip_transac_nict_onterm, this);
 
     /* Timers */
-	this.o_timerE = null;
-	this.o_timerF = null;
-	this.o_timerK = null;
+	//this.o_timerE = null;
+	//this.o_timerF = null;
+	//this.o_timerK = null;
 
-	this.i_timerE = o_stack.o_timers.getE();
-	this.i_timerF = o_stack.o_timers.getF();
-	this.i_timerK = b_reliable ? 0 : o_stack.o_timers.getK(); /* RFC 3261 - 17.1.2.2*/
+	this.o_timer = {
+		E: null,
+		F: null,
+		K: null
+	};
+
+	//this.i_timerE = o_stack.o_timers.getE();
+	//this.i_timerF = o_stack.o_timers.getF();
+	//this.i_timerK = b_reliable ? 0 : o_stack.o_timers.getK(); /* RFC 3261 - 17.1.2.2*/
+
+	this.i_timer = {
+		E: o_stack.o_timers.get('E'),
+		F: o_stack.o_timers.get('F'),
+		K: b_reliable ? 0 : o_stack.o_timers.get('K')
+	}
 
 	// initialize the state machine
 	this.o_fsm.set(
 	    /*=======================
-	    * === Started === 
+	    * === Started ===
 	    */
 	    // Started -> (Send) -> Trying
 	    tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nict_states_e.STARTED, tsip_transac_nict_actions_e.SEND, tsip_transac_nict_states_e.TRYING, __tsip_transac_nict_Started_2_Trying_X_send, "__tsip_transac_nict_Started_2_Trying_X_send"),
@@ -66,7 +78,7 @@ function tsip_transac_nict(b_reliable, i_cseq_value, s_cseq_method, s_callid, o_
 	    tsk_fsm_entry.prototype.CreateAlwaysNothing(tsip_transac_nict_states_e.STARTED, "tsip_transac_nict_Started_2_Started_X_any"),
 
 	    /*=======================
-	    * === Trying === 
+	    * === Trying ===
 	    */
 	    // Trying -> (timerE) -> Trying
 	    tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nict_states_e.TRYING, tsip_transac_nict_actions_e.TIMER_E, tsip_transac_nict_states_e.TRYING, __tsip_transac_nict_Trying_2_Trying_X_timerE, "__tsip_transac_nict_Trying_2_Trying_X_timerE"),
@@ -80,7 +92,7 @@ function tsip_transac_nict(b_reliable, i_cseq_value, s_cseq_method, s_callid, o_
 	    tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nict_states_e.TRYING, tsip_transac_nict_actions_e.I_200_to_699, tsip_transac_nict_states_e.COMPLETED, __tsip_transac_nict_Trying_2_Completed_X_200_to_699, "__tsip_transac_nict_Trying_2_Completed_X_200_to_699"),
 
 	    /*=======================
-	    * === Proceeding === 
+	    * === Proceeding ===
 	    */
 	    // Proceeding -> (timerE) -> Proceeding
 	    tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nict_states_e.PROCEEDING, tsip_transac_nict_actions_e.TIMER_E, tsip_transac_nict_states_e.PROCEEDING, __tsip_transac_nict_Proceeding_2_Proceeding_X_timerE, "__tsip_transac_nict_Proceeding_2_Proceeding_X_timerE"),
@@ -94,13 +106,13 @@ function tsip_transac_nict(b_reliable, i_cseq_value, s_cseq_method, s_callid, o_
 	    tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nict_states_e.PROCEEDING, tsip_transac_nict_actions_e.I_200_to_699, tsip_transac_nict_states_e.COMPLETED, __tsip_transac_nict_Proceeding_2_Completed_X_200_to_699, "__tsip_transac_nict_Proceeding_2_Completed_X_200_to_699"),
 
 	    /*=======================
-	    * === Completed === 
+	    * === Completed ===
 	    */
 	    // Completed -> (timer K) -> Terminated
 	    tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nict_states_e.COMPLETED, tsip_transac_nict_actions_e.TIMER_K, tsip_transac_nict_states_e.TERMINATED, __tsip_transac_nict_Completed_2_Terminated_X_timerK, "__tsip_transac_nict_Completed_2_Terminated_X_timerK"),
 
 	    /*=======================
-	    * === Any === 
+	    * === Any ===
 	    */
 	    // Any -> (transport error) -> Terminated
 	    tsk_fsm_entry.prototype.CreateAlways(tsk_fsm.prototype.__i_state_any, tsip_transac_nict_actions_e.TRANSPORT_ERROR, tsip_transac_nict_states_e.TERMINATED, __tsip_transac_nict_Any_2_Terminated_X_transportError, "__tsip_transac_nict_Any_2_Terminated_X_transportError"),
@@ -147,7 +159,7 @@ function __tsip_transac_nict_Started_2_Trying_X_send(ao_args) {
 		transaction SHOULD set timer F to fire in 64*T1 seconds.
 	*/
     o_transac.timer_schedule('nict', 'F');
-		
+
 	/*	RFC 3261 - 17.1.2.2
 		If an  unreliable transport is in use, the client transaction MUST set timer
 		E to fire in T1 seconds.
@@ -180,7 +192,7 @@ function __tsip_transac_nict_Trying_2_Trying_X_timerE(ao_args) {
 
 function __tsip_transac_nict_Trying_2_Terminated_X_timerF(ao_args) {
     var o_transac = ao_args[0];
-    
+
 	/*	RFC 3261 - 17.1.2.2
 		If Timer F fires while the client transaction is still in the
 		"Trying" state, the client transaction SHOULD inform the TU about the
@@ -188,7 +200,7 @@ function __tsip_transac_nict_Trying_2_Terminated_X_timerF(ao_args) {
 	*/
 
 	/* Timers will be canceled by "tsip_transac_nict_OnTerminated" */
-	
+
     o_transac.get_dialog().callback(tsip_dialog_event_type_e.TIMEDOUT, o_transac.o_request);
 
 	return 0;
@@ -219,7 +231,7 @@ function __tsip_transac_nict_Trying_2_Proceedding_X_1xx(ao_args) {
 		o_transac.timer_cancel('E');
 	}
 	o_transac.timer_cancel('F'); /* Now it's up to the UAS to update the FSM. */
-	
+
 	/* Pass the provisional response to the dialog */
 	o_transac.get_dialog().callback(tsip_dialog_event_type_e.I_MSG, o_message1xx);
 
@@ -271,7 +283,7 @@ function __tsip_transac_nict_Proceeding_2_Proceeding_X_timerE(ao_args) {
 
 function __tsip_transac_nict_Proceeding_2_Terminated_X_timerF(ao_args) {
     var o_transac = ao_args[0];
-    
+
 	/*	RFC 3261 - 17.1.2.2
 		If timer F fires while in the "Proceeding" state, the TU MUST be informed of a timeout, and the
 		client transaction MUST transition to the terminated state.
@@ -331,7 +343,7 @@ function __tsip_transac_nict_Proceeding_2_Completed_X_200_to_699(ao_args) {
 	}
 
     o_transac.get_dialog().callback(tsip_dialog_event_type_e.I_MSG, o_message);
-	
+
 	/* SCHEDULE timer K */
     o_transac.timer_schedule('nict', 'K');
 

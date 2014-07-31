@@ -9,7 +9,7 @@
 tsip_transac_nist.prototype = Object.create(tsip_transac.prototype);
 tsip_transac_nist.prototype.__b_debug_state_machine = false;
 
-var tsip_transac_nist_actions_e = 
+var tsip_transac_nist_actions_e =
 {
 	CANCEL: tsip_action_type_e.CANCEL,
 
@@ -21,7 +21,7 @@ var tsip_transac_nist_actions_e =
 	ERROR: 10008
 };
 
-var tsip_transac_nist_states_e = 
+var tsip_transac_nist_states_e =
 {
 	STARTED: 0,
 	TRYING: 1,
@@ -46,14 +46,18 @@ function tsip_transac_nist(b_reliable, i_cseq_value, s_cseq_method, s_callid, o_
     this.o_fsm.set_onterm_callback(__tsip_transac_nist_onterm, this);
 
     /* Timers */
-    this.o_timerJ = null;
-    this.i_timerJ = b_reliable ? 0 : o_stack.o_timers.getJ(); /* RFC 3261 - 17.2.2*/
+    this.o_timer = {
+			J: null
+		}
+    this.i_timer = {
+			J:  b_reliable ? 0 : o_stack.o_timers.get('J') /* RFC 3261 - 17.2.2*/
+		}
 
 
     // initialize the state machine
     this.o_fsm.set(
         /*=======================
-        * === Started === 
+        * === Started ===
         */
         // Started -> (receive request) -> Trying
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nist_states_e.STARTED, tsip_transac_nist_actions_e.RECV_REQUEST, tsip_transac_nist_states_e.TRYING, tsip_transac_nist_Started_2_Trying_X_request, "tsip_transac_nist_Started_2_Trying_X_request"),
@@ -61,7 +65,7 @@ function tsip_transac_nist(b_reliable, i_cseq_value, s_cseq_method, s_callid, o_
         tsk_fsm_entry.prototype.CreateAlwaysNothing(tsip_transac_nist_states_e.STARTED, "tsip_transac_nist_Started_2_Started_X_any"),
 
         /*=======================
-        * === Trying === 
+        * === Trying ===
         */
         // Trying -> (send 1xx) -> Proceeding
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nist_states_e.TRYING, tsip_transac_nist_actions_e.SEND_1XX, tsip_transac_nist_states_e.PROCEEDING, tsip_transac_nist_Trying_2_Proceeding_X_send_1xx, "tsip_transac_nist_Trying_2_Proceeding_X_send_1xx"),
@@ -69,7 +73,7 @@ function tsip_transac_nist(b_reliable, i_cseq_value, s_cseq_method, s_callid, o_
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nist_states_e.TRYING, tsip_transac_nist_actions_e.SEND_200_to_699, tsip_transac_nist_states_e.COMPLETED, tsip_transac_nist_Trying_2_Completed_X_send_200_to_699, "tsip_transac_nist_Trying_2_Completed_X_send_200_to_699"),
 
         /*=======================
-        * === Proceeding === 
+        * === Proceeding ===
         */
         // Proceeding -> (send 1xx) -> Proceeding
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nist_states_e.PROCEEDING, tsip_transac_nist_actions_e.SEND_1XX, tsip_transac_nist_states_e.PROCEEDING, tsip_transac_nist_Proceeding_2_Proceeding_X_send_1xx, "tsip_transac_nist_Proceeding_2_Proceeding_X_send_1xx"),
@@ -79,7 +83,7 @@ function tsip_transac_nist(b_reliable, i_cseq_value, s_cseq_method, s_callid, o_
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nist_states_e.PROCEEDING, tsip_transac_nist_actions_e.RECV_REQUEST, tsip_transac_nist_states_e.PROCEEDING, tsip_transac_nist_Proceeding_2_Proceeding_X_request, "tsip_transac_nist_Proceeding_2_Proceeding_X_request"),
 
         /*=======================
-        * === Completed === 
+        * === Completed ===
         */
         // Completed -> (receive request) -> Completed
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nist_states_e.COMPLETED, tsip_transac_nist_actions_e.RECV_REQUEST, tsip_transac_nist_states_e.COMPLETED, tsip_transac_nist_Completed_2_Completed_X_request, "tsip_transac_nist_Completed_2_Completed_X_request"),
@@ -87,7 +91,7 @@ function tsip_transac_nist(b_reliable, i_cseq_value, s_cseq_method, s_callid, o_
         tsk_fsm_entry.prototype.CreateAlways(tsip_transac_nist_states_e.COMPLETED, tsip_transac_nist_actions_e.TIMER_J, tsip_transac_nist_states_e.TERMINATED, tsip_transac_nist_Completed_2_Terminated_X_tirmerJ, "tsip_transac_nist_Completed_2_Terminated_X_tirmerJ"),
 
         /*=======================
-        * === Any === 
+        * === Any ===
         */
         // Any -> (transport error) -> Terminated
         tsk_fsm_entry.prototype.CreateAlways(tsk_fsm.prototype.__i_state_any, tsip_transac_nist_actions_e.TRANSPORT_ERROR, tsip_transac_nist_states_e.TERMINATED, tsip_transac_nist_Any_2_Terminated_X_transportError, "tsip_transac_nist_Any_2_Terminated_X_transportError"),
@@ -350,7 +354,7 @@ function __tsip_transac_nist_event_callback(o_self, e_event_type, o_message) {
 
 function __tsip_transac_nist_timer_callback(o_self, o_timer){
 	if(o_self){
-		if(o_timer == o_self.o_timerJ){
+		if(o_timer == o_self.o_timer['J']){
 			o_self.fsm_act(tsip_transac_nist_actions_e.TIMER_J, null);
 		}
 	}

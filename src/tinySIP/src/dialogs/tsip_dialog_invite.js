@@ -7,7 +7,7 @@
 // 3GPP TS 26.114 (MMTel): Media handling and interaction
 // 3GPP TS 24.173 (MMTel): Supplementary Services
 //
-/* ======================== MMTel Supplementary Services ======================== 
+/* ======================== MMTel Supplementary Services ========================
 3GPP TS 24.607 : Originating Identification Presentation
 3GPP TS 24.608 : Terminating Identification Presentation
 3GPP TS 24.607 : Originating Identification Restriction
@@ -15,14 +15,14 @@
 
 3GPP TS 24.604 : Communication Diversion Unconditional
 3GPP TS 24.604 : Communication Diversion on not Logged
-3GPP TS 24.604 : Communication Diversion on Busy 
+3GPP TS 24.604 : Communication Diversion on Busy
 3GPP TS 24.604 : Communication Diversion on not Reachable
 3GPP TS 24.604 : Communication Diversion on No Reply
 3GPP TS 24.611 : Barring of All Incoming Calls
 3GPP TS 24.611 : Barring of All Outgoing Calls
 3GPP TS 24.611 : Barring of Outgoing International Calls
 3GPP TS 24.611 : Barring of Incoming Calls - When Roaming
-3GPP TS 24.610 : Communication Hold 
+3GPP TS 24.610 : Communication Hold
 3GPP TS 24.606 : Message Waiting Indication
 3GPP TS 24.615 : Communication Waiting
 3GPP TS 24.605 : Ad-Hoc Multi Party Conference
@@ -39,7 +39,7 @@ var tsip_dialog_invite_next_offer_type_e =
     SUCCESS: 3
 };
 
-var tsip_dialog_invite_actions_e = 
+var tsip_dialog_invite_actions_e =
 {
 	ACCEPT: tsip_action_type_e.ACCEPT,
 	REJECT: tsip_action_type_e.HANGUP,
@@ -157,24 +157,33 @@ function tsip_dialog_invite(o_session, s_call_id) {
     this.stimers.i_minse = 0;
     this.stimers.b_is_refresher = false;
 
-    this.o_timer100Rel = null;
-    this.i_timer100Rel = 0;
-    this.o_timerSession = null;
-    this.o_timerShutdown = null;
-    this.i_timerShutdown = tsip_dialog.prototype.__i_timer_shutdown;
-    this.o_timerLoSdpRequest = null;
-    this.i_timerLoSdpRequest = tsip_dialog_invite.prototype.__i_lo_sdp_request_timeout;
+    //this.o_timer100Rel = null;
+    //this.i_timer100Rel = 0;
+    //this.o_timerSession = null;
+    //this.o_timerShutdown = null;
+    //this.i_timerShutdown = tsip_dialog.prototype.__i_timer_shutdown;
+    this.o_timer = {
+      LoSdpRequest: null,
+      "100Rel": null,
+      Session: null,
+      Shutdown: null
+    }
+    this.i_timer = {
+      LoSdpRequest: tsip_dialog_invite.prototype.__i_lo_sdp_request_timeout,
+      "100Rel": 0,
+      Shutdown: tsip_dialog.prototype.__i_timer_shutdown
+    }
 
     // initialize "common" state machine
     this.o_fsm.set(
         /*=======================
-        * === Started === 
+        * === Started ===
         */
         // Started -> (Any) -> Started
         tsk_fsm_entry.prototype.CreateAlwaysNothing(tsip_dialog_invite_states_e.STARTED, "tsip_dialog_invite_Started_2_Started_X_any"),
 
         /*=======================
-        * === Connected === 
+        * === Connected ===
         */
         // Connected -> (Send DTMF) -> Connected
         tsk_fsm_entry.prototype.CreateAlways(tsip_dialog_invite_states_e.CONNECTED, tsip_dialog_invite_actions_e.DTMF_SEND, tsip_dialog_invite_states_e.CONNECTED, x0000_Connected_2_Connected_X_oDTMF, "x0000_Connected_2_Connected_X_oDTMF"),
@@ -190,7 +199,7 @@ function tsip_dialog_invite(o_session, s_call_id) {
         tsk_fsm_entry.prototype.CreateAlways(tsip_dialog_invite_states_e.CONNECTED, tsip_dialog_invite_actions_e.O_INVITE, tsip_dialog_invite_states_e.CONNECTED, x0000_Connected_2_Connected_X_oINVITE, "x0000_Connected_2_Connected_X_oINVITE"),
 
         /*=======================
-        * === BYE/SHUTDOWN === 
+        * === BYE/SHUTDOWN ===
         */
         // Any -> (oBYE) -> Trying
         tsk_fsm_entry.prototype.CreateAlways(tsk_fsm.prototype.__i_state_any, tsip_dialog_invite_actions_e.O_BYE, tsip_dialog_invite_states_e.TRYING, x0000_Any_2_Trying_X_oBYE, "x0000_Any_2_Trying_X_oBYE"),
@@ -207,7 +216,7 @@ function tsip_dialog_invite(o_session, s_call_id) {
 
 
         /*=======================
-        * === Any === 
+        * === Any ===
         */
         // Any -> (i1xx) -> Any
         tsk_fsm_entry.prototype.CreateAlways(tsk_fsm.prototype.__i_state_any, tsip_dialog_invite_actions_e.I_1XX, tsk_fsm.prototype.__i_state_any, x0000_Any_2_Any_X_i1xx, "x0000_Any_2_Any_X_i1xx"),
@@ -543,7 +552,7 @@ tsip_dialog_invite.prototype.send_response = function (o_request, i_code, s_phra
         else if (o_request.is_refer()) {
             if (this.require.b_norefersub) {
                 o_response.add_headers(new tsip_header_Require("norefersub"));
-                
+
             }
             if (this.supported.b_norefersub) {
                 o_response.add_headers(new tsip_header_Supported("norefersub"));
@@ -580,7 +589,7 @@ tsip_dialog_invite.prototype.send_error = function (o_request, i_code, s_phrase,
 tsip_dialog_invite.prototype.send_bye = function(){
 	var i_ret = -1;
 	var o_bye;
-	
+
 	/* RFC 3261 - 15.1.1 UAC Behavior
 		A BYE request is constructed as would any other request within a
 		dialog, as described in Section 12.
@@ -750,7 +759,7 @@ tsip_dialog_invite.prototype.process_ro = function(o_message, b_is_offer){
 			return 0;
 		}
 	}
-	
+
 	b_media_session_was_null = (this.o_msession_mgr == null);
 	e_old_media_type = this.get_session().media.e_type;
 	e_new_media_type = o_sdp_ro ? o_sdp_ro.get_media_type() : e_old_media_type;
@@ -760,21 +769,21 @@ tsip_dialog_invite.prototype.process_ro = function(o_message, b_is_offer){
 		this.get_session().media.e_type = e_new_media_type;
 		this.o_msession_mgr = this.new_msession_mgr(e_new_media_type, this.get_stack().network.s_local_ip, false/* ipv6 */, (o_sdp_ro == null));
 	}
-	
+
 	if(o_sdp_ro){
 	    if ((i_ret = this.o_msession_mgr.set_ro(o_sdp_ro, b_is_offer))) {
 			tsk_utils_log_error("Failed to set remote offer");
 			return i_ret;
 		}
 	}
-	
+
 	// is media update?
 	if(!b_media_session_was_null && (e_old_media_type != e_new_media_type) && (this.o_msession_mgr.sdp.o_lo && this.o_msession_mgr.sdp.o_ro)){
 		// at this point the media session manager has been succeffuly started and all is ok
 		this.get_session().media.e_type = e_new_media_type;
         this.signal_invite(tsip_event_invite_type_e.M_UPDATED, o_message.get_response_code(), o_message.get_response_phrase(), o_message);
 	}
-	
+
 	/* start session manager */
 	if(!this.o_msession_mgr.is_started() && (this.o_msession_mgr.has_lo() && this.o_msession_mgr.has_ro())){
 		/* starts */
@@ -790,16 +799,16 @@ tsip_dialog_invite.prototype.process_ro = function(o_message, b_is_offer){
 function __tsip_dialog_invite_timer_callback(o_self, o_timer) {
     var i_ret = -1;
     if (o_self) {
-        if (o_self.o_timerSession == o_timer) {
+        if (o_self.o_timer["Session"] == o_timer) {
             i_ret = o_self.fsm_act(tsip_dialog_invite_actions_e.TIMER_REFRESH, null, null);
         }
-        else if (o_self.o_timer100Rel == o_timer) {
+        else if (o_self.o_timer["100Rel"] == o_timer) {
             i_ret = o_self.fsm_act(tsip_dialog_invite_actions_e.TIMER_100REL, null, null);
         }
-        else if (o_self.o_timerShutdown == o_timer) {
+        else if (o_self.o_timer["Shutdown"] == o_timer) {
             i_ret = o_self.fsm_act(tsip_dialog_invite_actions_e.SHUTDOWN_TIMEDOUT, null, null);
         }
-        else if (o_self.o_timerLoSdpRequest == o_timer) {
+        else if (o_self.o_timer["LoSdpRequest"] == o_timer) {
             i_ret = o_self.fsm_act(tsip_dialog_invite_actions_e.TIMER_LO_SDP_REQUEST, null, null);
         }
     }
@@ -1096,7 +1105,7 @@ function x0000_Connected_2_Connected_X_iINVITEorUPDATE(ao_args) {
     var o_dialog = ao_args[0];
     var o_request = ao_args[1];
     var i_ret;
-	
+
 	var b_bodiless_invite;
 	var e_old_media_type = o_dialog.o_msession_mgr ? o_dialog.o_msession_mgr.get_media_type() : tmedia_type_e.NONE;
     var b_is_roap = o_dialog.o_msession_mgr ? o_dialog.o_msession_mgr.is_roap() : false;
@@ -1117,22 +1126,22 @@ function x0000_Connected_2_Connected_X_iINVITEorUPDATE(ao_args) {
 
 	// force SDP in 200 OK even if the request has the same SDP version
 	b_force_sdp = o_request.has_content();
-	
+
 	// get new media_type after processing the remote offer
 	e_new_media_type = o_dialog.o_msession_mgr ? o_dialog.o_msession_mgr.get_media_type() : tmedia_type_e.NONE;
-	
+
 	/** response to bodiless iINVITE always contains SDP as explained below
-		RFC3261 - 14.1 UAC Behavior 
-		   The same offer-answer model that applies to session descriptions in 
-		   INVITEs (Section 13.2.1) applies to re-INVITEs.  As a result, a UAC 
-		   that wants to add a media stream, for example, will create a new 
-		   offer that contains this media stream, and send that in an INVITE 
-		   request to its peer.  It is important to note that the full 
-		   description of the session, not just the change, is sent.  This 
-		   supports stateless session processing in various elements, and 
-		   supports failover and recovery capabilities.  Of course, a UAC MAY 
-		   send a re-INVITE with no session description, in which case the first 
-		   reliable non-failure response to the re-INVITE will contain the offer 
+		RFC3261 - 14.1 UAC Behavior
+		   The same offer-answer model that applies to session descriptions in
+		   INVITEs (Section 13.2.1) applies to re-INVITEs.  As a result, a UAC
+		   that wants to add a media stream, for example, will create a new
+		   offer that contains this media stream, and send that in an INVITE
+		   request to its peer.  It is important to note that the full
+		   description of the session, not just the change, is sent.  This
+		   supports stateless session processing in various elements, and
+		   supports failover and recovery capabilities.  Of course, a UAC MAY
+		   send a re-INVITE with no session description, in which case the first
+		   reliable non-failure response to the re-INVITE will contain the offer
 		   (in this specification, that is a 2xx response).
 	*/
 	b_bodiless_invite = !o_request.has_content() && o_request.is_invite();
@@ -1154,7 +1163,7 @@ function x0000_Connected_2_Connected_X_iINVITEorUPDATE(ao_args) {
 
 	/* alert the user */
 	o_dialog.signal_invite(tsip_event_invite_type_e.DIALOG_REQUEST_INCOMING, tsip_event_code_e.DIALOG_REQUEST_INCOMING, "Incoming Request", o_request);
-	
+
 
 	return i_ret;
 }
@@ -1192,11 +1201,11 @@ function x0000_Any_2_Any_X_i1xx(ao_args) {
     dialog.  In particular, a UAC SHOULD NOT retransmit the PRACK request
     when it receives a retransmission of the provisional response being
     acknowledged, although doing so does not create a protocol error.
-	 
+
     Additional information: We should only process the SDP from reliable responses (require:100rel)
     but there was many problem with some clients sending SDP with this tag: tiscali, DTAG, samsung, ...
     */
-    
+
     if ((o_r1xx.get_response_code() >= 101 && o_r1xx.get_response_code() <= 199)) {
         /* Process Remote offer */
         var b_is_offer = o_dialog.o_msession_mgr && !o_dialog.o_msession_mgr.has_lo();
@@ -1266,7 +1275,7 @@ function x0000_Any_2_Any_X_i401_407_INVITEorUPDATE(ao_args) {
 
     if ((i_ret = o_dialog.update_with_response(o_response))) {
         // alert user
-        o_dialog.signal_invite(tsip_event_invite_type_e.I_AO_REQUEST, o_response.get_response_code(), o_response.get_response_phrase(), o_response);		
+        o_dialog.signal_invite(tsip_event_invite_type_e.I_AO_REQUEST, o_response.get_response_code(), o_response.get_response_phrase(), o_response);
 		return i_ret;
 	}
 
@@ -1306,7 +1315,7 @@ function x0000_Any_2_Any_X_i2xxINVITEorUPDATE(ao_args) {
     if (o_response.is_response_to_invite()) {
         i_ret = o_dialog.send_ack(o_response);
     }
-	
+
 	return i_ret;
 }
 
@@ -1385,7 +1394,7 @@ function x9998_Any_2_Terminated_X_transportError(ao_args) {
 
 function x9999_Any_2_Terminated_X_Error(ao_args) {
     var o_dialog = ao_args[0];
-    
+
     return 0;
 }
 
@@ -1408,7 +1417,7 @@ function __tsip_dialog_invite_onterm(o_self) {
     if (o_self.o_msession_mgr) {
         i_ret = o_self.o_msession_mgr.stop();
     }
-    
+
     // signal to the user must be done after the media session is stopped to be sure that all events (e.g. media_removed) will be notified
     o_self.signal(tsip_event_code_e.DIALOG_TERMINATED,
             o_self.last_error.s_phrase ? o_self.last_error.s_phrase : "Call terminated",

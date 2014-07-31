@@ -61,15 +61,39 @@ tsip_transac.prototype.deinit = function () {
 }
 
 tsip_transac.prototype.timer_schedule = function (T, N) {
+  console.log("T: " + T);
+  console.log("N: " + N);
     this.timer_cancel(N);
     var This = this;
     var s_code = tsk_string_format("This.o_timer{1} = setTimeout(function(){ __tsip_transac_{0}_timer_callback(This, This.o_timer{1})}, This.i_timer{1});", T, N);
-    eval(s_code);
+    switch(T) {
+      case "nict":
+        console.log("In nict");
+        This.o_timer[N] = setTimeout(function(){ __tsip_transac_nict_timer_callback(This, This.o_timer[N])}, This.i_timer[N]);
+        break;
+      case "ict":
+        console.log("In ict");
+        This.o_timer[N] = setTimeout(function(){ __tsip_transac_ict_timer_callback(This, This.o_timer[N])}, This.i_timer[N]);
+        break;
+      case "nist":
+        console.log("In nist");
+        This.o_timer[N] = setTimeout(function(){ __tsip_transac_nist_timer_callback(This, This.o_timer[N])}, This.i_timer[N]);
+        break;
+      default:
+        console.warn("TYPE NOT FOUND: " + T);
+        break;
+    }
+
+    console.log(s_code);
+    //eval(s_code);
 }
 
 tsip_transac.prototype.timer_cancel = function (N) {
+  console.log("N: " + N);
     var s_code = tsk_string_format("if(this.o_timer{0}) { clearTimeout(this.o_timer{0}); this.o_timer{0} = null; }", N);
-    eval(s_code);
+    console.log(s_code);
+    if(this.o_timer[N]) { clearTimeout(this.o_timer[N]); this.o_timer[N] = null; }
+    //eval(s_code);
 }
 
 tsip_transac.prototype.set_callback = function (fn_callback) {

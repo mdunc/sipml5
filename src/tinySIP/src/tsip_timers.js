@@ -45,22 +45,24 @@ function tsip_timers() {
     this.M = tsip_timers_e.M;
 }
 
-tsip_timers.prototype.getA = function () { return this.A; }
-tsip_timers.prototype.getB = function () { return this.B; }
-tsip_timers.prototype.getC = function () { return this.C; }
-tsip_timers.prototype.getD = function () { return this.D; }
-tsip_timers.prototype.getE = function () { return this.E; }
-tsip_timers.prototype.getF = function () { return this.F; }
-tsip_timers.prototype.getG = function () { return this.G; }
-tsip_timers.prototype.getH = function () { return this.H; }
-tsip_timers.prototype.getI = function () { return this.I; }
-tsip_timers.prototype.getJ = function () { return this.J; }
-tsip_timers.prototype.getK = function () { return this.K; }
-tsip_timers.prototype.getL = function () { return this.L; }
-tsip_timers.prototype.getM = function () { return this.M; }
-tsip_timers.prototype.getT1 = function () { return this.T1; }
-tsip_timers.prototype.getT2 = function () { return this.T2; }
-tsip_timers.prototype.getT4 = function () { return this.T4; }
+tsip_timers.prototype.get = function(c) { return this[c]; }
+
+//tsip_timers.prototype.getA = function () { return this.A; }
+//tsip_timers.prototype.getB = function () { return this.B; }
+//tsip_timers.prototype.getC = function () { return this.C; }
+//tsip_timers.prototype.getD = function () { return this.D; }
+//tsip_timers.prototype.getE = function () { return this.E; }
+//tsip_timers.prototype.getF = function () { return this.F; }
+//tsip_timers.prototype.getG = function () { return this.G; }
+//tsip_timers.prototype.getH = function () { return this.H; }
+//tsip_timers.prototype.getI = function () { return this.I; }
+//tsip_timers.prototype.getJ = function () { return this.J; }
+//tsip_timers.prototype.getK = function () { return this.K; }
+//tsip_timers.prototype.getL = function () { return this.L; }
+//tsip_timers.prototype.getM = function () { return this.M; }
+//tsip_timers.prototype.getT1 = function () { return this.T1; }
+//tsip_timers.prototype.getT2 = function () { return this.T2; }
+//tsip_timers.prototype.getT4 = function () { return this.T4; }
 
 tsip_timers.prototype.setT1 = function(i_t1){
 	this.T1 = i_t1;

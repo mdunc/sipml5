@@ -43,9 +43,16 @@ function tsip_dialog_register(o_session, s_call_id) {
     this.b_unregistering = false;
     this.b_is_server = false;
 
-    this.o_timerRefresh = null;
-    this.o_timerShutdown = null;
-    this.i_timerShutdown = (tsip_dialog.prototype.__i_timer_shutdown << 1) / 3;
+    this.o_timer = {
+      Refresh: null,
+      Shutdown: null
+    }
+
+    //this.o_timerRefresh = null;
+    //this.o_timerShutdown = null;
+    this.i_timer = {
+      Shutdown: (tsip_dialog.prototype.__i_timer_shutdown << 1) / 3
+    }
 
     this.init(tsip_dialog_type_e.REGISTER, s_call_id, o_session, tsip_dialog_register_states_e.STARTED, tsip_dialog_register_states_e.TERMINATED);
     this.set_callback(__tsip_dialog_register_event_callback);
@@ -55,13 +62,13 @@ function tsip_dialog_register(o_session, s_call_id) {
     // initialize state machine
     this.o_fsm.set(
             /*=======================
-			* === Started === 
+			* === Started ===
 			*/
 			// Started -> (REGISTER) -> InProgress
 			tsk_fsm_entry.prototype.CreateAlways(tsip_dialog_register_states_e.STARTED, tsip_dialog_register_actions_e.O_REGISTER, tsip_dialog_register_states_e.INPROGRESS, __tsip_dialog_register_Started_2_InProgress_X_oRegister, "tsip_dialog_register_Started_2_InProgress_X_oRegister"),
 
 			/*=======================
-			* === InProgress === 
+			* === InProgress ===
 			*/
 			// InProgress -> (1xx) -> InProgress
 			tsk_fsm_entry.prototype.CreateAlways(tsip_dialog_register_states_e.INPROGRESS, tsip_dialog_register_actions_e.I_1XX, tsip_dialog_register_states_e.INPROGRESS, __tsip_dialog_register_InProgress_2_InProgress_X_1xx, "tsip_dialog_register_InProgress_2_InProgress_X_1xx"),
@@ -82,15 +89,15 @@ function tsip_dialog_register(o_session, s_call_id) {
 			// InProgress -> (shutdown) -> Terminated
 			tsk_fsm_entry.prototype.CreateAlways(tsip_dialog_register_states_e.INPROGRESS, tsip_dialog_register_actions_e.SHUTDOWN, tsip_dialog_register_states_e.TERMINATED, null, "tsip_dialog_register_InProgress_2_Terminated_X_shutdown"),
 
-            
+
 			/*=======================
-			* === Connected === 
+			* === Connected ===
 			*/
 			// Connected -> (register) -> InProgress [refresh case]
 			tsk_fsm_entry.prototype.CreateAlways(tsip_dialog_register_states_e.CONNECTED, tsip_dialog_register_actions_e.O_REGISTER, tsip_dialog_register_states_e.INPROGRESS, __tsip_dialog_register_Connected_2_InProgress_X_oRegister, "tsip_dialog_register_Connected_2_InProgress_X_oRegister"),
 
             /*=======================
-			* === Any === 
+			* === Any ===
 			*/
 			// Any -> (hangup) -> InProgress
 			tsk_fsm_entry.prototype.Create(tsk_fsm.prototype.__i_state_any, tsip_dialog_register_actions_e.HANGUP, __tsip_dialog_register_cond_not_silent_hangup, tsip_dialog_register_states_e.INPROGRESS, __tsip_dialog_register_Any_2_InProgress_X_hangup, "tsip_dialog_register_Any_2_InProgress_X_hangup"),
@@ -101,7 +108,7 @@ function tsip_dialog_register(o_session, s_call_id) {
 			// Any -> (silentshutdown) -> Terminated
 			tsk_fsm_entry.prototype.Create(tsk_fsm.prototype.__i_state_any, tsip_dialog_register_actions_e.SHUTDOWN, __tsip_dialog_register_cond_silent_shutdown, tsip_dialog_register_states_e.TERMINATED, null, "tsip_dialog_register_Any_2_InProgress_X_silentshutdown"),
 			// Any -> (shutdown timedout) -> Terminated
-			tsk_fsm_entry.prototype.CreateAlways(tsk_fsm.prototype.__i_state_any, tsip_dialog_register_actions_e.SHUTDOWN_TIMEDOUT, tsip_dialog_register_states_e.TERMINATED, null, "tsip_dialog_register_shutdown_timedout"),			
+			tsk_fsm_entry.prototype.CreateAlways(tsk_fsm.prototype.__i_state_any, tsip_dialog_register_actions_e.SHUTDOWN_TIMEDOUT, tsip_dialog_register_states_e.TERMINATED, null, "tsip_dialog_register_shutdown_timedout"),
 			// Any -> (transport error) -> Terminated
 			tsk_fsm_entry.prototype.CreateAlways(tsk_fsm.prototype.__i_state_any, tsip_dialog_register_actions_e.TRANSPORT_ERROR, tsip_dialog_register_states_e.TERMINATED, __tsip_dialog_register_Any_2_Terminated_X_transportError, "tsip_dialog_register_Any_2_Terminated_X_transportError"),
 			// Any -> (error) -> Terminated
@@ -296,7 +303,7 @@ function __tsip_dialog_register_InProgress_2_Connected_X_2xx(ao_args) {
 		var o_hdr_Path;
 		var o_hdr_Service_Route;
 		var o_hdr_P_Associated_URI;
-		
+
         o_stack.ao_uri_associated_uris.splice(0, o_stack.ao_uri_associated_uris.length);
         o_stack.ao_uri_service_routes.splice(0, o_stack.ao_uri_service_routes.length);
         o_stack.ao_uri_paths.splice(0, o_stack.ao_uri_paths.length);
@@ -333,7 +340,7 @@ function __tsip_dialog_register_InProgress_2_Connected_X_2xx(ao_args) {
 		var o_uri;
 		var o_uri_first = null;
 
-	/*	
+	/*
 		b) store as the default public user identity the first URI on the list of URIs present in the P-Associated-URI header
 		field and bind it to the respective contact address of the UE and the associated set of security associations or TLS
 		session;
@@ -361,17 +368,17 @@ function __tsip_dialog_register_InProgress_2_Connected_X_2xx(ao_args) {
             o_stack.identity.o_uri_pref = o_uri_first;
 		}
 	}
-	
+
 	// Update the dialog state
 	if((i_ret = o_dialog.update_with_response(o_response)) != 0){
 		return i_ret;
 	}
-	
+
 	// Reset current action */
 	o_dialog.set_action_curr(null);
-	
+
 	// Request timeout for dialog refresh (re-registration)
-	o_dialog.i_timerRefresh = o_dialog.get_newdelay(o_response);
+	o_dialog.i_timer['Refresh'] = o_dialog.get_newdelay(o_response);
 	o_dialog.timer_schedule('register', 'Refresh');
 
 	// alert user
@@ -379,7 +386,7 @@ function __tsip_dialog_register_InProgress_2_Connected_X_2xx(ao_args) {
 	if (b_first_time_to_connect) {
 	    o_dialog.signal(tsip_event_code_e.DIALOG_CONNECTED, "Connected");
 	}
-	
+
 	return i_ret;
 }
 
@@ -391,10 +398,10 @@ function __tsip_dialog_register_InProgress_2_InProgress_X_401_407_421_494(ao_arg
 	if((i_ret = o_dialog.update_with_response(o_response))){
 		// alert user
 		o_dialog.signal_register(tsip_event_register_type_e.AO_REGISTER, o_response.get_response_code(), o_response.get_response_phrase(), o_response);
-		
+
 		// set last error
 		o_dialog.set_last_error(o_response.get_response_code(), o_response.get_response_phrase(), o_response);
-		
+
 		return i_ret;
 	}
 
@@ -436,11 +443,11 @@ function __tsip_dialog_register_InProgress_2_Terminated_X_300_to_699(ao_args) {
 
 	// save last error
 	o_dialog.set_last_error(o_response.get_response_code(), o_response.get_response_phrase(), o_response);
-	
+
 	// alert user
-    o_dialog.signal_register(o_dialog.b_unregistering ? tsip_event_register_type_e.AO_UNREGISTER : tsip_event_register_type_e.AO_REGISTER, 
+    o_dialog.signal_register(o_dialog.b_unregistering ? tsip_event_register_type_e.AO_UNREGISTER : tsip_event_register_type_e.AO_REGISTER,
                 o_response.get_response_code(), o_response.get_response_phrase(), o_response);
-	
+
 	return 0;
 }
 
@@ -491,7 +498,7 @@ function __tsip_dialog_register_Any_2_InProgress_X_hangup(ao_args) {
 
 function __tsip_dialog_register_Any_2_InProgress_X_shutdown(ao_args) {
     var o_dialog = ao_args[0];
-	
+
 	// schedule shutdow timer
     o_dialog.timer_schedule('register', 'Shutdown');
 
@@ -515,7 +522,7 @@ function __tsip_dialog_register_Any_2_Terminated_X_Error(ao_args) {
 	// save last error
     if(o_response){
 	    o_dialog.set_last_error(o_response.get_response_code(), o_response.get_response_phrase(), o_response);
-        o_dialog.signal_register(o_dialog.b_unregistering ? tsip_event_register_type_e.AO_UNREGISTER : tsip_event_register_type_e.AO_REGISTER, 
+        o_dialog.signal_register(o_dialog.b_unregistering ? tsip_event_register_type_e.AO_UNREGISTER : tsip_event_register_type_e.AO_REGISTER,
                 o_response.get_response_code(), o_response.get_response_phrase(), o_response);
     }
     else{
@@ -542,4 +549,3 @@ function __tsip_dialog_register_onterm(o_self) {
     // deinit
     return o_self.deinit();
 }
-
