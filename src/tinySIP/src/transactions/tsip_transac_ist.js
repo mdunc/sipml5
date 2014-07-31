@@ -55,23 +55,39 @@ function tsip_transac_ist(b_reliable, i_cseq_value, s_callid, o_dialog) {
     this.o_fsm.set_onterm_callback(__tsip_transac_ist_onterm, this);
 
     /* Timers */
-    this.o_timerH = null;
-    this.o_timerI = null;
-    this.o_timerG = null;
-    this.o_timerL = null;
-    this.o_timerX = null;
+    //this.o_timerH = null;
+    //this.o_timerI = null;
+    //this.o_timerG = null;
+    //this.o_timerL = null;
+    //this.o_timerX = null;
 
-    this.i_timerH = o_stack.o_timers.getH();
-    this.i_timerI = b_reliable ? 0 : o_stack.o_timers.getI();
-    this.i_timerG = o_stack.o_timers.getG();
-    this.i_timerL = o_stack.o_timers.getL();
-    this.i_timerX = o_stack.o_timers.getG();
+		this.o_timer = {
+			H: null,
+			I: null,
+			G: null,
+			L: null,
+			X: null
+		}
+
+    //this.i_timerH = o_stack.o_timers.getH();
+    //this.i_timerI = b_reliable ? 0 : o_stack.o_timers.getI();
+    //this.i_timerG = o_stack.o_timers.getG();
+    //this.i_timerL = o_stack.o_timers.getL();
+    //this.i_timerX = o_stack.o_timers.getG();
+
+		this.i_timer = {
+			H: o_stack.o_timers.get('H'),
+			I: b_reliable ? 0 : o_stack.o_timers.get('I'),
+			G: o_stack.o_timers.get('G'),
+			L: o_stack.o_timers.get('L'),
+			X: o_stack.o_timers.get('X')
+		}
 
     // initialize the state machine
     this.o_fsm.set(
 
         /*=======================
-		* === Started === 
+		* === Started ===
 		*/
 		// Started -> (recv INVITE) -> Proceeding
 		tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ist_states_e.STARTED, tsip_transac_ist_actions_e.RECV_INVITE, tsip_transac_ist_states_e.PROCEEDING, __tsip_transac_ist_Started_2_Proceeding_X_INVITE, "tsip_transac_ist_Started_2_Proceeding_X_INVITE"),
@@ -79,7 +95,7 @@ function tsip_transac_ist(b_reliable, i_cseq_value, s_callid, o_dialog) {
 		tsk_fsm_entry.prototype.CreateAlwaysNothing(tsip_transac_ist_states_e.STARTED, "tsip_transac_ist_Started_2_Started_X_any"),
 
 		/*=======================
-		* === Proceeding === 
+		* === Proceeding ===
 		*/
 		// Proceeding -> (recv INVITE) -> Proceeding
 		tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ist_states_e.PROCEEDING, tsip_transac_ist_actions_e.RECV_INVITE, tsip_transac_ist_states_e.PROCEEDING, __tsip_transac_ist_Proceeding_2_Proceeding_X_INVITE, "tsip_transac_ist_Proceeding_2_Proceeding_X_INVITE"),
@@ -91,7 +107,7 @@ function tsip_transac_ist(b_reliable, i_cseq_value, s_callid, o_dialog) {
 		tsk_fsm_entry.prototype.Create(tsip_transac_ist_states_e.PROCEEDING, tsip_transac_ist_actions_e.SEND_2XX, __tsip_transac_ist_cond_is_resp2invite, tsip_transac_ist_states_e.ACCEPTED, __tsip_transac_ist_Proceeding_2_Accepted_X_2xx, "tsip_transac_ist_Proceeding_2_Accepted_X_2xx"),
 
 		/*=======================
-		* === Completed === 
+		* === Completed ===
 		*/
 		// Completed -> (recv INVITE) -> Completed
 		tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ist_states_e.COMPLETED, tsip_transac_ist_actions_e.RECV_INVITE, tsip_transac_ist_states_e.COMPLETED, __tsip_transac_ist_Completed_2_Completed_INVITE, "tsip_transac_ist_Completed_2_Completed_INVITE"),
@@ -101,9 +117,9 @@ function tsip_transac_ist(b_reliable, i_cseq_value, s_callid, o_dialog) {
 		tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ist_states_e.COMPLETED, tsip_transac_ist_actions_e.TIMER_H, tsip_transac_ist_states_e.TERMINATED, __tsip_transac_ist_Completed_2_Terminated_timerH, "tsip_transac_ist_Completed_2_Terminated_timerH"),
 		// Completed -> (recv ACK) -> Confirmed
 		tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ist_states_e.COMPLETED, tsip_transac_ist_actions_e.RECV_ACK, tsip_transac_ist_states_e.CONFIRMED, __tsip_transac_ist_Completed_2_Confirmed_ACK, "tsip_transac_ist_Completed_2_Confirmed_ACK"),
-			
+
 		/*=======================
-		* === Accepted === 
+		* === Accepted ===
 		*/
 		// Accepted -> (recv INVITE) -> Accepted
 		tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ist_states_e.ACCEPTED, tsip_transac_ist_actions_e.RECV_INVITE, tsip_transac_ist_states_e.ACCEPTED, __tsip_transac_ist_Accepted_2_Accepted_INVITE, "tsip_transac_ist_Accepted_2_Accepted_INVITE"),
@@ -117,14 +133,14 @@ function tsip_transac_ist(b_reliable, i_cseq_value, s_callid, o_dialog) {
 		tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ist_states_e.ACCEPTED, tsip_transac_ist_actions_e.TIMER_L, tsip_transac_ist_states_e.TERMINATED, __tsip_transac_ist_Accepted_2_Terminated_timerL, "tsip_transac_ist_Accepted_2_Terminated_timerL"),
 
 		/*=======================
-		* === Confirmed === 
+		* === Confirmed ===
 		*/
 		// Confirmed -> (timerI) -> Terminated
 		tsk_fsm_entry.prototype.CreateAlways(tsip_transac_ist_states_e.CONFIRMED, tsip_transac_ist_actions_e.TIMER_I, tsip_transac_ist_states_e.TERMINATED, __tsip_transac_ist_Confirmed_2_Terminated_timerI, "tsip_transac_ist_Confirmed_2_Terminated_timerI"),
 
 
 		/*=======================
-		* === Any === 
+		* === Any ===
 		*/
 		// Any -> (transport error) -> Terminated
 		tsk_fsm_entry.prototype.CreateAlways(tsk_fsm.prototype.__i_state_any, tsip_transac_ist_actions_e.TRANSPORT_ERROR, tsip_transac_ist_states_e.TERMINATED, __tsip_transac_ist_Any_2_Terminated_X_transportError, "tsip_transac_ist_Any_2_Terminated_X_transportError"),
@@ -224,7 +240,7 @@ function __tsip_transac_ist_Proceeding_2_Completed_X_300_to_699(ao_args) {
 		While in the "Proceeding" state, if the TU passes a response with
 		status code from 300 to 699 to the server transaction, the response
 		MUST be passed to the transport layer for transmission, and the state
-		machine MUST enter the "Completed" state. For unreliable transports, timer G is set to fire in T1 seconds, 
+		machine MUST enter the "Completed" state. For unreliable transports, timer G is set to fire in T1 seconds,
 		and is not set to fire for reliable transports.
 	*/
 	if(!o_transac.b_reliable){
@@ -271,7 +287,7 @@ function __tsip_transac_ist_Proceeding_2_Accepted_X_2xx(ao_args) {
 		transport at the UAS is reliable.
 	*/
     o_transac.timer_schedule('ist', 'X');
-    o_transac.i_timerX <<= 1;
+    o_transac.i_timer['X'] <<= 1;
 
 	/*	draft-sparks-sip-invfix-03 - 8.7. Page 137
 		When the INVITE server transaction enters the "Accepted" state,
@@ -306,10 +322,10 @@ function __tsip_transac_ist_Completed_2_Completed_INVITE(ao_args) {
 function __tsip_transac_ist_Completed_2_Completed_timerG(ao_args) {
     var o_transac = ao_args[0];
 	var i_ret;
-	
+
 	/*	RFC 3261 - 17.2.1 INVITE Server Transaction
-		If timer G fires, the response is passed to the transport layer once 
-		more for retransmission, and timer G is set to fire in MIN(2*T1, T2) seconds.  
+		If timer G fires, the response is passed to the transport layer once
+		more for retransmission, and timer G is set to fire in MIN(2*T1, T2) seconds.
 		From then on, when timer G fires, the response is passed to the transport again for
 		transmission, and timer G is reset with a value that doubles, unless
 		that value exceeds T2, in which case it is reset with the value of T2.
@@ -317,7 +333,7 @@ function __tsip_transac_ist_Completed_2_Completed_timerG(ao_args) {
 	if(o_transac.o_lastResponse){
         i_ret = (o_transac.send(o_transac.s_branch, o_transac.o_lastResponse) > 0 ? 0 : -1);
 	}
-    o_transac.i_timerG = Math.min(o_transac.i_timerG << 1, o_transac.get_stack().o_timers.getT2());
+    o_transac.i_timer['G'] = Math.min(o_transac.i_timerG << 1, o_transac.get_stack().o_timers.get('T2'));
     o_transac.timer_schedule('ist', 'G');
 
 	return i_ret;
@@ -360,7 +376,7 @@ function __tsip_transac_ist_Completed_2_Confirmed_ACK(ao_args) {
 
 function __tsip_transac_ist_Accepted_2_Accepted_INVITE(ao_args) {
     var o_transac = ao_args[0];
-	
+
 	/*	draft-sparks-sip-invfix-03 - 8.7. Page 137
 		The purpose of the "Accepted" state is to absorb retransmissions
 		of an accepted INVITE request.  Any such retransmissions are
@@ -404,7 +420,7 @@ function __tsip_transac_ist_Accepted_2_Accepted_timerX(ao_args){
 	if(o_transac.o_lastResponse){
 		var i_ret = (o_transac.send(o_transac.s_branch, o_transac.o_lastResponse) > 0 ? 0 : -1);
 		if (i_ret == 0) {
-		    o_transac.i_timerX <<= 1;
+		    o_transac.i_timer['X'] <<= 1;
 		    o_transac.timer_schedule('ist', 'X');
 		}
 		return i_ret;
@@ -536,19 +552,19 @@ function __tsip_transac_ist_event_callback(o_self, e_event_type, o_message) {
 
 function __tsip_transac_ist_timer_callback(o_self, o_timer) {
     if (o_self) {
-        if (o_timer == o_self.o_timerH) {
+        if (o_timer == o_self.o_timer['H']) {
             o_self.fsm_act(tsip_transac_ist_actions_e.TIMER_H, null);
         }
-        else if (o_timer == o_self.o_timerI) {
+        else if (o_timer == o_self.o_timer['I']) {
             o_self.fsm_act(tsip_transac_ist_actions_e.TIMER_I, null);
         }
-        else if (o_timer == o_self.o_timerG) {
+        else if (o_timer == o_self.o_timer['G']) {
             o_self.fsm_act(tsip_transac_ist_actions_e.TIMER_G, null);
         }
-        else if (o_timer == o_self.o_timerL) {
+        else if (o_timer == o_self.o_timer['L']) {
             o_self.fsm_act(tsip_transac_ist_actions_e.TIMER_L, null);
         }
-        else if (o_timer == o_self.o_timerX) {
+        else if (o_timer == o_self.o_timer['X']) {
             o_self.fsm_act(tsip_transac_ist_actions_e.TIMER_X, null);
         }
     }

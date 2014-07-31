@@ -66,23 +66,9 @@ tsip_transac.prototype.timer_schedule = function (T, N) {
     this.timer_cancel(N);
     var This = this;
     var s_code = tsk_string_format("This.o_timer{1} = setTimeout(function(){ __tsip_transac_{0}_timer_callback(This, This.o_timer{1})}, This.i_timer{1});", T, N);
-    switch(T) {
-      case "nict":
-        console.log("In nict");
-        This.o_timer[N] = setTimeout(function(){ __tsip_transac_nict_timer_callback(This, This.o_timer[N])}, This.i_timer[N]);
-        break;
-      case "ict":
-        console.log("In ict");
-        This.o_timer[N] = setTimeout(function(){ __tsip_transac_ict_timer_callback(This, This.o_timer[N])}, This.i_timer[N]);
-        break;
-      case "nist":
-        console.log("In nist");
-        This.o_timer[N] = setTimeout(function(){ __tsip_transac_nist_timer_callback(This, This.o_timer[N])}, This.i_timer[N]);
-        break;
-      default:
-        console.warn("TYPE NOT FOUND: " + T);
-        break;
-    }
+
+    var method = window["__tsip_transac_" + T + "_timer_callback"];
+    This.o_timer[N] = setTimeout(function() { method.call(window, This, This.o_timer[N])}, This.i_timer[N]);
 
     console.log(s_code);
     //eval(s_code);
