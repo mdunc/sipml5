@@ -50,22 +50,12 @@ function tsip_transac_ict(b_reliable, i_cseq_value, s_callid, o_dialog) {
     this.o_fsm.set_onterm_callback(__tsip_transac_ict_onterm, this);
 
     /* Timers */
-    //this.o_timerA = null;
-    //this.o_timerB = null;
-    //this.o_timerD = null;
-    //this.o_timerM = null;
-
 		this.o_timer = {
 			A: null,
 			B: null,
 			D: null,
 			M: null
 		}
-
-    //this.i_timerA = o_stack.o_timers.get('A');
-    //this.i_timerB = o_stack.o_timers.get('B');
-    //this.i_timerD = b_reliable ? 0 : o_stack.o_timers.get('D');
-    //this.i_timerM = o_stack.o_timers.get('M');
 
 		this.i_timer = {
 			A: o_stack.o_timers.get('A'),

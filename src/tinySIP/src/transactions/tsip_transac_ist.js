@@ -55,12 +55,6 @@ function tsip_transac_ist(b_reliable, i_cseq_value, s_callid, o_dialog) {
     this.o_fsm.set_onterm_callback(__tsip_transac_ist_onterm, this);
 
     /* Timers */
-    //this.o_timerH = null;
-    //this.o_timerI = null;
-    //this.o_timerG = null;
-    //this.o_timerL = null;
-    //this.o_timerX = null;
-
 		this.o_timer = {
 			H: null,
 			I: null,
@@ -68,12 +62,6 @@ function tsip_transac_ist(b_reliable, i_cseq_value, s_callid, o_dialog) {
 			L: null,
 			X: null
 		}
-
-    //this.i_timerH = o_stack.o_timers.getH();
-    //this.i_timerI = b_reliable ? 0 : o_stack.o_timers.getI();
-    //this.i_timerG = o_stack.o_timers.getG();
-    //this.i_timerL = o_stack.o_timers.getL();
-    //this.i_timerX = o_stack.o_timers.getG();
 
 		this.i_timer = {
 			H: o_stack.o_timers.get('H'),

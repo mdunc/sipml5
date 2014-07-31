@@ -47,19 +47,11 @@ function tsip_transac_nict(b_reliable, i_cseq_value, s_cseq_method, s_callid, o_
     this.o_fsm.set_onterm_callback(__tsip_transac_nict_onterm, this);
 
     /* Timers */
-	//this.o_timerE = null;
-	//this.o_timerF = null;
-	//this.o_timerK = null;
-
 	this.o_timer = {
 		E: null,
 		F: null,
 		K: null
 	};
-
-	//this.i_timerE = o_stack.o_timers.getE();
-	//this.i_timerF = o_stack.o_timers.getF();
-	//this.i_timerK = b_reliable ? 0 : o_stack.o_timers.getK(); /* RFC 3261 - 17.1.2.2*/
 
 	this.i_timer = {
 		E: o_stack.o_timers.get('E'),
