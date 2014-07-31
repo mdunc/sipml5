@@ -721,20 +721,12 @@ tsip_dialog.prototype.signal = function (i_code, s_phrase, o_message) {
 tsip_dialog.prototype.timer_schedule = function (T, N) {
     this.timer_cancel(N);
     var This = this;
-    var s_code = tsk_string_format("This.o_timer{1} = setTimeout(function(){ __tsip_dialog_{0}_timer_callback(This, This.o_timer{1})}, This.i_timer{1});", T, N);
-    console.log(s_code);
-    switch (T) {
-      case "register":
-        This.o_timer[N] = setTimeout(function(){ __tsip_dialog_register_timer_callback(This, This.o_timer[N])}, This.i_timer[N]);
-    }
-    //eval(s_code);
+    var method=window["__tsip_dialog_" + T + "_timer_callback"];
+    This.o_timer[N] = setTimeout(function() { method.call(window, This, This.o_timer[N])}, This.i_timer[N]);
 }
 
 tsip_dialog.prototype.timer_cancel = function (N) {
-    var s_code = tsk_string_format("if(this.o_timer{0}) { clearTimeout(this.o_timer{0}); this.o_timer{0} = null; }", N);
-    console.log(s_code);
     if(this.o_timer[N]) { clearTimeout(this.o_timer[N]); this.o_timer[N] = null; }
-    //eval(s_code);
 }
 
 tsip_dialog.prototype.callback = function (e_event_type, o_message) {
